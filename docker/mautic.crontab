@@ -1,0 +1,16 @@
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+10,25,40,55 * * * *                          www-data    php /var/www/html/bin/console mautic:campaigns:trigger --env=prod > /var/log/cron/cron.pipe 2>&1
+2,7,12,17,22,27,32,37,42,47,52,57 * * * *    www-data    php /var/www/html/bin/console messenger:consume email --env=prod > /var/log/cron/cron.pipe 2>&1
+9,14,19,24,29,34,39,44,49,54 * * * *         www-data    php /var/www/html/bin/console mautic:email:fetch --env=prod > /var/log/cron/cron.pipe 2>&1
+0,15,30,45 * * * *                           www-data    php /var/www/html/bin/console mautic:segments:update --env=prod > /var/log/cron/cron.pipe 2>&1
+2 * * * *                                    www-data    php /var/www/html/bin/console mautic:campaigns:rebuild --env=prod > /var/log/cron/cron.pipe 2>&1
+5 * * * *                                    www-data    php /var/www/html/bin/console mautic:broadcasts:send --env=prod > /var/log/cron/cron.pipe 2>&1
+7 * * * *                                    www-data    php /var/www/html/bin/console mautic:social:monitoring --env=prod > /var/log/cron/cron.pipe 2>&1
+3,11,19,27,34,42,50 * * * *                  www-data    php /var/www/html/bin/console mautic:import --env=prod > /var/log/cron/cron.pipe 2>&1
+*/5 * * * *                                  www-data    php /var/www/html/bin/console mautic:queue:process --env=prod -i page_hit > /var/log/cron/cron.pipe 2>&1
+*/5 * * * *                                  www-data    php /var/www/html/bin/console mautic:queue:process --env=prod -i email_hit > /var/log/cron/cron.pipe 2>&1
+
+# download geoip db on start if it does not exist
+@reboot                www-data   [[ "$(ls -A /var/www/html/app/cache/ip_data 2>/dev/null)" ]] || php /var/www/html/bin/console mautic:iplookup:download > /var/log/cron.pipe 2>&1

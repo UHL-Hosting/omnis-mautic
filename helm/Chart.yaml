@@ -1,0 +1,25 @@
+apiVersion: v2
+name: mautic
+description: A Helm chart for Kubernetes
+type: application
+version: 0.1.0
+appVersion: "5.0.0"
+icon: https://www.mautic.org/themes/custom/mauticorg_base/logo.svg
+dependencies:
+- name: rabbitmq
+  version: 11.x.x
+  repository: https://charts.bitnami.com/bitnami
+  condition: rabbitmq.enabled
+- name: redis
+  version: 17.x.x
+  repository: https://charts.bitnami.com/bitnami
+  condition: redis.enabled
+- name: mariadb
+  version: 11.x.x
+  repository: https://charts.bitnami.com/bitnami
+  condition: mariadb.enabled
+- name: common
+  repository: https://charts.bitnami.com/bitnami
+  tags:
+  - bitnami-common
+  version: 2.x.x

@@ -1,0 +1,257 @@
+## @section Global parameters
+## Global Docker image parameters
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+## @section Common parameters
+##
+nameOverride: ""
+fullnameOverride: ""
+commonLabels: {}
+commonAnnotations: {}
+clusterDomain: cluster.local
+extraDeploy: []
+
+image:
+  registry: docker.io
+  repository: mautic/mautic
+  tag: v5
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+replicaCount: 1
+
+extraVolumes: []
+
+extraVolumeMounts: []
+
+initContainers: []
+
+podLabels: {}
+
+podAnnotations: {}
+
+resources:
+  limits: {}
+  requests:
+    memory: 512Mi
+    cpu: 100m
+
+podSecurityContext:
+  enabled: true
+  fsGroup: 33
+
+containerSecurityContext:
+  enabled: true
+  runAsUser: 33
+  runAsNonRoot: true
+
+serviceAccount:
+  create: false
+  name: ""
+  automountServiceAccountToken: true
+  annotations: {}
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 11
+  targetCPU: 50
+  targetMemory: 50
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+# Configs
+configs:
+  phpini: |-
+    date.timezone = "UTC"
+    always_populate_raw_post_data = -1
+    memory_limit = 512M
+    file_uploads = On
+    upload_max_filesize = 20M
+    post_max_size = 20M
+    max_execution_time = 300
+    zend.assertions = -1
+  localphp: |-
+    <?php
+    $parameters = array(
+      'db_driver' => 'pdo_mysql',
+      'db_host' => 'mydb.com',
+      'db_table_prefix' => null,
+      'db_port' => '3306',
+      'db_name' => 'mautic',
+      'db_user' => 'example-user',
+      'db_password' => 'my_cool_secret',
+      'db_backup_tables' => 1,
+      'db_backup_prefix' => 'bak_',
+      'mailer_from_name' => 'Admin',
+      'mailer_from_email' => 'admin@mywebsite.com',
+      'mailer_transport' => 'smtp',
+      'mailer_host' => 'mail.mywebsite.com',
+      'mailer_port' => '587',
+      'mailer_user' => null,
+      'mailer_password' => null,
+      'mailer_amazon_region' => 'us-east-1',
+      'mailer_amazon_other_region' => null,
+      'mailer_sparkpost_region' => 'us',
+      'mailer_api_key' => null,
+      'mailer_encryption' => null,
+      'mailer_auth_mode' => null,
+      'mailer_spool_type' => 'memory',
+      'mailer_spool_path' => '%kernel.project_dir%/var/spool',
+      'messenger_dsn' => 'sync://',
+      'messenger_type' => 'sync',
+      'messenger_retry_strategy_max_retries' => 3,
+      'messenger_retry_strategy_delay' => 1000,
+      'messenger_retry_strategy_multiplier' => 2,
+      'messenger_retry_strategy_max_delay' => 0,
+      'secret_key' => 'mysecretkey',
+      'site_url' => 'http://mywebsite',
+    );
+  apacheports: |
+    Listen 8080
+    <IfModule ssl_module>
+      Listen 443
+    </IfModule>
+    <IfModule mod_gnutls.c>
+      Listen 443
+    </IfModule>
+  crontab: |
+    SHELL=/bin/bash
+    PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+    10,25,40,55 * * * *                          www-data    php /var/www/html/bin/console mautic:campaigns:trigger --env=prod > /var/log/cron/cron.pipe 2>&1
+    2,7,12,17,22,27,32,37,42,47,52,57 * * * *    www-data    php /var/www/html/bin/console mautic:messenger:consume email --env=prod > /var/log/cron/cron.pipe 2>&1
+    9,14,19,24,29,34,39,44,49,54 * * * *         www-data    php /var/www/html/bin/console mautic:email:fetch --env=prod > /var/log/cron/cron.pipe 2>&1
+    0,15,30,45 * * * *                           www-data    php /var/www/html/bin/console mautic:segments:update --env=prod > /var/log/cron/cron.pipe 2>&1
+    2 * * * *                                    www-data    php /var/www/html/bin/console mautic:campaigns:rebuild --env=prod > /var/log/cron/cron.pipe 2>&1
+    5 * * * *                                    www-data    php /var/www/html/bin/console mautic:broadcasts:send --env=prod > /var/log/cron/cron.pipe 2>&1
+    7 * * * *                                    www-data    php /var/www/html/bin/console mautic:social:monitoring --env=prod > /var/log/cron/cron.pipe 2>&1
+    3,11,19,27,34,42,50 * * * *                  www-data    php /var/www/html/bin/console mautic:import --env=prod > /var/log/cron/cron.pipe 2>&1
+    */5 * * * *                                  www-data    php /var/www/html/bin/console mautic:queue:process --env=prod -i page_hit > /var/log/cron/cron.pipe 2>&1
+    */5 * * * *                                  www-data    php /var/www/html/bin/console mautic:queue:process --env=prod -i email_hit > /var/log/cron/cron.pipe 2>&1
+
+    # download geoip db on start if it does not exist
+    @reboot                www-data   [[ "$(ls -A /var/www/html/app/cache/ip_data 2>/dev/null)" ]] || php /var/www/html/bin/console mautic:iplookup:download > /var/log/cron.pipe 2>&1
+
+# Persistence - Persistence Volume Claims
+persistence:
+  enabled: true
+  storageClass: ""
+  size: 10Gi
+
+trustedIPs: ["0.0.0.0/0"]
+
+# Cron Config
+cron:
+  restartPolicy: Never
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 60
+  backoffLimit: 2
+  resources: {}
+    # We usually recommend not to specify default resources and to leave this as a conscious
+    # choice for the user. This also increases chances charts run on environments with little
+    # resources, such as Minikube. If you do want to specify resources, uncomment the following
+    # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+    # limits:
+    #   cpu: 100m
+    #   memory: 128Mi
+    # requests:
+    #   cpu: 100m
+    #   memory: 128Mi
+
+mariadb:
+  ## To use an external database set this to false and configure the `externalDatabase.*` parameters
+  ##
+  enabled: true
+  ## @param mariadb.architecture MariaDB architecture. Allowed values: `standalone` or `replication`
+  ##
+  architecture: standalone
+  ## MariaDB Authentication parameters
+  ##
+  auth:
+    rootPassword: ""
+    database: mautic
+    username: mautic
+    password: ""
+  ## MariaDB Primary configuration
+  ##
+  primary:
+    persistence:
+      enabled: true
+      storageClass: ""
+      accessModes:
+      - ReadWriteOnce
+      size: 8Gi
+
+## External Database Configuration
+## All of these values are only used if `mariadb.enabled=false`
+externalDatabase:
+  host: localhost
+  port: 3306
+  user: mautic
+  password: ""
+  database: mautic
+  existingSecret: ""
+
+# Rabbit MQ
+rabbitmq:
+  enabled: true
+  auth:
+    username: user
+    existingPasswordSecret: mautic-rabbitmq-password
+
+
+# Redis
+redis:
+  enabled: true
+  usePassword: true
+  usePasswordFile: true
+  existingSecret: redis-password-file
+  password: redis-password
+
+
+# Cron Job values
+# @TODO - switch --env=prod/dev based on namespace
+# @TODO - update to process RabbitMQ queue with a conditional process rate set by CI/CD per ENV
+cronjobs:
+  - name: trigger-campaign
+    schedule: "10,25,40,55 * * * *"
+    command: "/var/www/html/bin/console mautic:campaigns:trigger --env=prod"
+  - name: emails-send
+    schedule: "2,7,12,17,22,27,32,37,42,47,52,57 * * * *"
+    command: "/var/www/html/bin/console mautic:messenger:consume email --env=prod"
+  - name: email-fetch
+    schedule: "9,14,19,24,29,34,39,44,49,54 * * * *"
+    command: "/var/www/html/bin/console mautic:email:fetch --env=prod"
+  - name: segments-update
+    schedule: "0,15,30,45 * * * *"
+    command: "/var/www/html/bin/console mautic:segments:update --env=prod"
+  - name: campaigns-rebuild
+    schedule: "2 * * * *"
+    command: "/var/www/html/bin/console mautic:campaigns:rebuild --env=prod"
+  - name: broadcasts-send
+    schedule: "5 * * * *"
+    command: "/var/www/html/bin/console mautic:broadcasts:send --env=prod"
+  - name: social-monitoring
+    schedule: "7 * * * *"
+    command: "/var/www/html/bin/console mautic:social:monitoring --env=prod"
+  - name: import
+    schedule: "3,11,19,27,34,42,50 * * * *"
+    command: "/var/www/html/bin/console mautic:import --env=prod"
+  - name: queue-process-pages
+    schedule: "*/5 * * * *"
+    command: "/var/www/html/bin/console mautic:queue:process --env=prod -i page_hit"
+  - name: queue-process-email
+    schedule: "*/5 * * * *"
+    command: "/var/www/html/bin/console mautic:queue:process --env=prod -i email_hit"
+
