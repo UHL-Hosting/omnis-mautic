@@ -21,7 +21,7 @@ extraDeploy: []
 image:
   registry: docker.io
   repository: mautic/mautic
-  tag: v5
+  tag: v6
   pullPolicy: IfNotPresent
   pullSecrets: []
 

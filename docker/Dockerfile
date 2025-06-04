@@ -38,7 +38,7 @@ RUN curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh \
   && rm nodesource_setup.sh
 
 # Define Mautic version and expected SHA1 signature
-ENV MAUTIC_VERSION 5.0.0-alpha1
+ENV MAUTIC_VERSION 6.0.0
 
 # By default enable cron jobs
 ENV MAUTIC_RUN_CRON_JOBS true
