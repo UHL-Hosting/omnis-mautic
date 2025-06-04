@@ -1,2 +1,2 @@
 # mautic-k8s
-Mautic deployment on Kubernetes
+Mautic 6 deployment on Kubernetes
