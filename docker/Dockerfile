@@ -31,10 +31,10 @@ RUN docker-php-ext-configure imap --with-imap --with-imap-ssl --with-kerberos \
 # Install composer
 COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
 
-# Install Node 18
+# Install Node 18 and npm
 RUN curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh \
   && bash nodesource_setup.sh \
-  && apt-get install --no-install-recommends -y nodejs \
+  && apt-get install --no-install-recommends -y nodejs npm \
   && rm nodesource_setup.sh
 
 # Define Mautic version and expected SHA1 signature
@@ -74,5 +74,6 @@ RUN git clone https://github.com/mautic/mautic.git /var/www/html
 
 WORKDIR /var/www/html
 RUN composer update && composer install
+RUN npm install && npm run build
 
 CMD ["/bin/bash", "-c", "/usr/sbin/cron && apache2-foreground"]
