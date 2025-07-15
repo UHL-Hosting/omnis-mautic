@@ -69,8 +69,10 @@ WORKDIR /var/www/html
 RUN echo 'memory_limit = 512M' >> /usr/local/etc/php/conf.d/docker-php-memlimit.ini
 
 USER www-data
-# Clone Mautic Git repository
-RUN git clone https://github.com/mautic/mautic.git /var/www/html
+# Clone Mautic Git repository and checkout the configured version
+RUN git clone https://github.com/mautic/mautic.git /var/www/html \
+    && cd /var/www/html \
+    && git checkout tags/${MAUTIC_VERSION}
 
 WORKDIR /var/www/html
 RUN composer update && composer install
