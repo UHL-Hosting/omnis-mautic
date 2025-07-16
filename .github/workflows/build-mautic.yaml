@@ -1,0 +1,49 @@
+name: Build and Push Mautic Image
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docker/**'
+      - 'helm/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push Docker Image
+        run: |
+          IMAGE_NAME=ghcr.io/${{ github.repository }}/mautic
+          TAG=$(date +%Y%m%d%H%M)
+          docker build -f docker/Dockerfile -t $IMAGE_NAME:$TAG docker
+          docker push $IMAGE_NAME:$TAG
+
+      - name: Update Helm values.yaml
+        run: |
+          sed -i "s|repository:.*|repository: ghcr.io/${{ github.repository }}/mautic|" helm/values.yaml
+          sed -i "s|tag:.*|tag: $TAG|" helm/values.yaml
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add helm/values.yaml
+          git commit -m "Update Mautic image to $TAG"
+          git push
