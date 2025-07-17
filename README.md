@@ -24,3 +24,7 @@ records match the expected hostname. You can enable this by setting the
 redis:
   architecture: replication
 ```
+
+## RabbitMQ password secret
+
+This chart automatically creates a secret containing the RabbitMQ password. The secret name is controlled by `rabbitmq.auth.existingPasswordSecret` and defaults to `mautic-rabbitmq-password`.

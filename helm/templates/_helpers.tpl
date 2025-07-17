@@ -97,3 +97,14 @@ Return the MariaDB Secret Name
     {{- printf "%s-externaldb" (include "common.names.fullname" .) -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return the RabbitMQ Password Secret Name
+*/}}
+{{- define "mautic.rabbitmqPasswordSecretName" -}}
+{{- if .Values.rabbitmq.auth.existingPasswordSecret -}}
+    {{- printf "%s" .Values.rabbitmq.auth.existingPasswordSecret -}}
+{{- else -}}
+    {{- printf "%s-rabbitmq" (include "common.names.fullname" .) -}}
+{{- end -}}
+{{- end -}}
