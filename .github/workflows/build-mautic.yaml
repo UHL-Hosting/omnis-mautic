@@ -30,14 +30,16 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}/mautic
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_NAME="ghcr.io/$REPO/mautic"
           TAG=$(date +%Y%m%d%H%M)
-          docker build -f docker/Dockerfile -t $IMAGE_NAME:$TAG docker
-          docker push $IMAGE_NAME:$TAG
+          docker build -f docker/Dockerfile -t "$IMAGE_NAME:$TAG" docker
+          docker push "$IMAGE_NAME:$TAG"
 
       - name: Update Helm values.yaml
         run: |
-          sed -i "s|repository:.*|repository: ghcr.io/${{ github.repository }}/mautic|" helm/values.yaml
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          sed -i "s|repository:.*|repository: ghcr.io/$REPO/mautic|" helm/values.yaml
           sed -i "s|tag:.*|tag: $TAG|" helm/values.yaml
 
       - name: Commit and Push changes
