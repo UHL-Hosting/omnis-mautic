@@ -16,7 +16,6 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libssl-dev \
   libz-dev \
   libzip-dev \
-  neovim \
   unzip \
   zip \
   && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
@@ -31,14 +30,13 @@ RUN docker-php-ext-configure imap --with-imap --with-imap-ssl --with-kerberos \
 # Install composer
 COPY --from=composer/composer:latest-bin /composer /usr/bin/composer
 
-# Install Node 18 and npm
-RUN curl -sL https://deb.nodesource.com/setup_18.x -o nodesource_setup.sh \
-  && bash nodesource_setup.sh \
-  && apt-get install --no-install-recommends -y nodejs npm \
-  && rm nodesource_setup.sh
+# Install Node 18 and npm from Nodesource
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+  && apt-get install --no-install-recommends -y nodejs \
+  && rm -rf /var/lib/apt/lists/*
 
 # Define Mautic version and expected SHA1 signature
-ENV MAUTIC_VERSION 6.0.0
+ENV MAUTIC_VERSION 6.0.3
 
 # By default enable cron jobs
 ENV MAUTIC_RUN_CRON_JOBS true
