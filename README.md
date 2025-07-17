@@ -28,3 +28,12 @@ redis:
 ## RabbitMQ password secret
 
 This chart automatically creates a secret containing the RabbitMQ password. The secret name is controlled by `rabbitmq.auth.existingPasswordSecret` and defaults to `mautic-rabbitmq-password`.
+
+## PVC cleanup on uninstall
+
+PersistentVolumeClaims created for Mautic's data will be deleted when the Helm release is removed unless you opt into retaining them. Set `persistence.retain` to `true` in your values file if you want to keep the PVC around after running `helm uninstall`:
+
+```yaml
+persistence:
+  retain: true
+```
