@@ -218,6 +218,7 @@ redis:
   usePasswordFile: true
   existingSecret: redis-password-file
   password: redis-password
+  architecture: replication
 
 
 # Cron Job values
