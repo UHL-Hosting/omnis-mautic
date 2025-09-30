@@ -1,0 +1,41 @@
+when:
+  - event: push
+    branch: main
+
+# steps:
+#   - name: deploy-to-k8s
+#     image: cloud/my-k8s-plugin
+#     settings:
+#       template: config/k8s/service.yaml
+
+
+# steps:
+#   - name: tofu
+#     image: quay.io/thegeeklab/wp-opentofu
+#     settings:
+#       actions:
+#         - validate
+#         - plan
+
+# clone:
+#   git:
+#     image: quay.io/thegeeklab/wp-git-clone
+#     settings:
+#       depth: 50
+#       lfs: false
+
+steps:
+  - name: build
+    image: golang
+    commands:
+      - go build
+      - go test
+
+  - name: prettier
+    image: woodpeckerci/plugin-prettier
+
+  - name: publish
+    image: woodpeckerci/plugin-kaniko
+    settings:
+      repo: foo/bar
+      tags: latest
